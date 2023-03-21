@@ -21,6 +21,8 @@ Note : ⚠️⚠️⚠️ This Library In Development Don`t Use For Production
 - [ ] Email Validation
 - [ ] Query XSS Detection
 
+> .... More Features (In Planning)
+
 ## Example
 
 Schema `schema.json`
