@@ -58,8 +58,12 @@ function validate(schema, res, data) {
                             for (var key in schema) {
                                 var value = data[key];
                                 var _a = schema[key], type = _a.type, require_1 = _a.require, maxLength = _a.maxLength, minLength = _a.minLength, errorMessage = _a.errorMessage;
+                                // Not Require
+                                if (require_1 === false && value === undefined) {
+                                    continue;
+                                }
                                 // Require Checking
-                                if (require_1 && !value) {
+                                if (require_1 === true && !value) {
                                     console.log("There Is Required Value And Not Implemented '".concat(key, "'"));
                                     pushErrorMessage(errorMessage, "isRequireErrorMessage");
                                     return resolve(false);

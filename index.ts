@@ -66,8 +66,13 @@ async function validate(
       const value = data[key];
       const { type, require, maxLength, minLength, errorMessage } = schema[key];
 
+      // Not Require
+      if (require === false && value === undefined) {
+        continue;
+      }
+
       // Require Checking
-      if (require && !value) {
+      if (require === true && !value) {
         console.log(`There Is Required Value And Not Implemented '${key}'`);
 
         pushErrorMessage(errorMessage, "isRequireErrorMessage");
