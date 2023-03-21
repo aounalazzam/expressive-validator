@@ -20,7 +20,8 @@ Note : ⚠️⚠️⚠️ This Library In Development Don`t Use For Production
 - [ ] Headers
 - [ ] Email Validation
 - [ ] Query XSS Detection
-... More(Planning)
+
+> .... More Features (In Planning)
 
 ## Example
 
