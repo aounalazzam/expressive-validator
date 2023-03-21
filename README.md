@@ -11,6 +11,16 @@ Note : ⚠️⚠️⚠️ This Library In Development Don`t Use For Production
 - Better JSON schema compliance
 - Can Validate Body, Query, Params, Cookies & Headers In Same Time
 
+## Dev Timeline
+
+- [x] Body
+- [x] Query
+- [x] Params
+- [ ] Cookies
+- [ ] Headers
+- [ ] Email Validation
+- [ ] Query XSS Detection
+
 ## Example
 
 Schema `schema.json`
