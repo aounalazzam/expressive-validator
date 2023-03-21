@@ -2,7 +2,8 @@
   "name": "expressive-validator",
   "description": "A Schema Based Validation For Body, Query, Params In Express JS",
   "version": "1.0.1",
-  "main": "index.ts",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aounalazzam/expressive-validator.git"
