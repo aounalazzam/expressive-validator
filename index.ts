@@ -4,6 +4,8 @@
 
 import { NextFunction, Request, Response } from "express";
 
+type HTTPMethod = "GET" | "PATCH" | "POST" | "PUT" | "DELETE";
+
 type ErrorMessages =
   | "isRequireErrorMessage"
   | "notSameTypeErrorMessage"
@@ -35,7 +37,7 @@ type ValidationRule = {
 
 type Schema = {
   [url: string]:
-    | Array<ValidationRule & { method: "POST" | "PUT" | "GET" | "DELETE" }>
+    | Array<ValidationRule & { method: HTTPMethod }>
     | ValidationRule;
 };
 
@@ -164,8 +166,13 @@ function expressiveValidator(schema: Schema) {
     }
 
     if (Array.isArray(routeSchema)) {
-      routeSchema = routeSchema.find(
-        (subSchema) => subSchema.method === method
+      routeSchema = routeSchema.find(({ method: currentHTTPMethod }) =>
+        currentHTTPMethod.includes("|")
+          ? currentHTTPMethod
+              .trim()
+              .split("|")
+              .find((m: HTTPMethod) => m === method)
+          : currentHTTPMethod === method
       );
 
       if (!routeSchema) {

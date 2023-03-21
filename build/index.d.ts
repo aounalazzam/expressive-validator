@@ -2,6 +2,7 @@
  * This Source Code Is Written By Aoun Alazzam And Under The MIT License
  */
 import { NextFunction, Request, Response } from "express";
+type HTTPMethod = "GET" | "PATCH" | "POST" | "PUT" | "DELETE";
 type ErrorMessages = "isRequireErrorMessage" | "notSameTypeErrorMessage" | "overMaxLengthErrorMessage" | "lessThanMinLengthErrorMessage";
 type ValidationParams = {
     type: "string" | "number" | "boolean" | "array" | "object" | "null" | "undefined";
@@ -25,7 +26,7 @@ type ValidationRule = {
 };
 type Schema = {
     [url: string]: Array<ValidationRule & {
-        method: "POST" | "PUT" | "GET" | "DELETE";
+        method: HTTPMethod;
     }> | ValidationRule;
 };
 declare function expressiveValidator(schema: Schema): (request: Request, response: Response, next: NextFunction) => Promise<void>;

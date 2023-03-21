@@ -132,7 +132,15 @@ function expressiveValidator(schema) {
                         return [2 /*return*/, next()];
                     }
                     if (Array.isArray(routeSchema)) {
-                        routeSchema = routeSchema.find(function (subSchema) { return subSchema.method === method; });
+                        routeSchema = routeSchema.find(function (_a) {
+                            var currentHTTPMethod = _a.method;
+                            return currentHTTPMethod.includes("|")
+                                ? currentHTTPMethod
+                                    .trim()
+                                    .split("|")
+                                    .find(function (m) { return m === method; })
+                                : currentHTTPMethod === method;
+                        });
                         if (!routeSchema) {
                             console.log("No Schema For Route : <" + method + " > " + originalUrl);
                             return [2 /*return*/, next()];

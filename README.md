@@ -44,8 +44,10 @@ Schema `schema.json`
   // Specifying For Multiple HTTP Methods Per Route
   "/api/users": [
     {
-      "method": "GET"
-      ...
+      "method": "GET|DELETE",
+      "body": {
+        "id": { "type": "string", "require": true }
+      }
     },
     {
       "method": "POST"
@@ -71,6 +73,10 @@ app.use(expressiveValidator(schema));
 ..
 
 ```
+
+## Documentation
+
+Under Construction
 
 ## License
 

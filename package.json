@@ -1,7 +1,7 @@
 {
   "name": "expressive-validator",
   "description": "A Schema Based Validation For Body, Query, Params In Express JS",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "repository": {
