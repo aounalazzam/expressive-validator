@@ -4,6 +4,13 @@ A Schema Based Validation Middleware For Body, Query, Params, Cookies & Headers 
 
 Note : ⚠️⚠️⚠️ This Library In Development Don`t Use For Production
 
+
+## Usage
+
+```bash
+npm i expressive-validator
+```
+
 ## Features
 
 - Schema-Based & Memory Efficient
