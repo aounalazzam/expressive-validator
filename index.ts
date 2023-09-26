@@ -17,6 +17,7 @@ type ValidationParams = {
   type:
     | "string"
     | "string(email)"
+    | "string(no-symbols)"
     | "number"
     | "boolean"
     | "array"
@@ -203,7 +204,20 @@ async function validate(
   });
 }
 
-function expressiveValidator(schema: Schema) {
+function expressiveValidator(
+  schema: Schema,
+  errorLogger?: (req: Request, res: Response) => void
+) {
+  const errLogger = (req: Request, res: Response) => {
+    if (errorLogger) {
+      errorLogger(req, res);
+      res.end();
+      return;
+    }
+
+    res.status(500).end();
+  };
+
   return async (request: Request, response: Response, next: NextFunction) => {
     const { body, query, params, headers, originalUrl, method } = request;
 
@@ -237,7 +251,7 @@ function expressiveValidator(schema: Schema) {
       routeSchemaParams &&
       !(await validate(routeSchemaParams, response, params))
     ) {
-      return;
+      return errLogger(request, response);
     }
 
     const routeSchemaQueryParams = routeSchema.query;
@@ -247,14 +261,14 @@ function expressiveValidator(schema: Schema) {
       routeSchemaQueryParams &&
       !(await validate(routeSchemaQueryParams, response, query, true))
     ) {
-      return;
+      return errLogger(request, response);
     }
 
     const routeSchemaBody = routeSchema.body;
 
     // Body Checking
     if (routeSchemaBody && !(await validate(routeSchemaBody, response, body))) {
-      return;
+      return errLogger(request, response);
     }
 
     const routeSchemaHeaders = routeSchema.headers;
@@ -264,7 +278,7 @@ function expressiveValidator(schema: Schema) {
       routeSchemaHeaders &&
       !(await validate(routeSchemaHeaders, response, headers))
     ) {
-      return;
+      return errLogger(request, response);
     }
 
     next();

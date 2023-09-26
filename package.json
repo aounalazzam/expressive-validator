@@ -17,7 +17,7 @@
   ],
   "scripts": {
     "build": "npx tsc",
-    "publish:package": "npm run build && npm publish"
+    "publish": "npm run build && npm publish"
   },
   "author": "AounAlazzam",
   "license": "MIT",

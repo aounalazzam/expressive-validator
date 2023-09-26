@@ -26,6 +26,7 @@ npm i expressive-validator
 - [x] Email Validation
 - [x] No Symbols Validation
 - [x] Query XSS Detection
+- [x] Custom Error Logger
 
 > .... More Features (In Planning)
 
@@ -78,6 +79,30 @@ const app = express();
 
 app.use(express.json());
 app.use(expressiveValidator(schema));
+
+..
+
+```
+
+Add Custom Error Logger Middleware Usage `app.js`
+
+```javascript
+const express = require("express");
+const AppError = require("./error");
+const expressiveValidator = require("expressive-validator");
+
+const schema = require("./schema.json");
+
+const app = express();
+
+const logger = (req, res) => {
+  throw new AppError({
+    message : "Invalid Type"
+  })
+}
+
+app.use(express.json());
+app.use(expressiveValidator(schema, logger));
 
 ..
 
