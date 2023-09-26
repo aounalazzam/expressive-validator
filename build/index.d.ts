@@ -5,7 +5,7 @@ import { NextFunction, Request, Response } from "express";
 type HTTPMethod = "GET" | "PATCH" | "POST" | "PUT" | "DELETE";
 type ErrorMessages = "isRequireErrorMessage" | "notSameTypeErrorMessage" | "overMaxLengthErrorMessage" | "lessThanMinLengthErrorMessage";
 type ValidationParams = {
-    type: "string" | "string(email)" | "number" | "boolean" | "array" | "object" | "null" | "undefined";
+    type: "string" | "string(email)" | "string(no-symbols)" | "number" | "boolean" | "array" | "object" | "null" | "undefined";
     require?: boolean;
     minLength?: number;
     maxLength?: number;
@@ -32,5 +32,5 @@ type Schema = {
         method: HTTPMethod;
     }> | ValidationRule;
 };
-declare function expressiveValidator(schema: Schema): (request: Request, response: Response, next: NextFunction) => Promise<void>;
+declare function expressiveValidator(schema: Schema, errorLogger?: (req: Request, res: Response) => void): (request: Request, response: Response, next: NextFunction) => Promise<void>;
 export default expressiveValidator;

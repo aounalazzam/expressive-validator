@@ -152,8 +152,16 @@ function validate(schema, res, data, checkXSS) {
         });
     });
 }
-function expressiveValidator(schema) {
+function expressiveValidator(schema, errorLogger) {
     var _this = this;
+    var errLogger = function (req, res) {
+        if (errorLogger) {
+            errorLogger(req, res);
+            res.end();
+            return;
+        }
+        res.status(500).end();
+    };
     return function (request, response, next) { return __awaiter(_this, void 0, void 0, function () {
         var body, query, params, headers, originalUrl, method, routeSchema, routeSchemaParams, _a, routeSchemaQueryParams, _b, routeSchemaBody, _c, routeSchemaHeaders, _d;
         return __generator(this, function (_e) {
@@ -190,7 +198,7 @@ function expressiveValidator(schema) {
                 case 2:
                     // Params Checking
                     if (_a) {
-                        return [2 /*return*/];
+                        return [2 /*return*/, errLogger(request, response)];
                     }
                     routeSchemaQueryParams = routeSchema.query;
                     _b = routeSchemaQueryParams;
@@ -202,7 +210,7 @@ function expressiveValidator(schema) {
                 case 4:
                     // Query Checking
                     if (_b) {
-                        return [2 /*return*/];
+                        return [2 /*return*/, errLogger(request, response)];
                     }
                     routeSchemaBody = routeSchema.body;
                     _c = routeSchemaBody;
@@ -214,7 +222,7 @@ function expressiveValidator(schema) {
                 case 6:
                     // Body Checking
                     if (_c) {
-                        return [2 /*return*/];
+                        return [2 /*return*/, errLogger(request, response)];
                     }
                     routeSchemaHeaders = routeSchema.headers;
                     _d = routeSchemaHeaders;
@@ -226,7 +234,7 @@ function expressiveValidator(schema) {
                 case 8:
                     // Headers Checking
                     if (_d) {
-                        return [2 /*return*/];
+                        return [2 /*return*/, errLogger(request, response)];
                     }
                     next();
                     return [2 /*return*/];
