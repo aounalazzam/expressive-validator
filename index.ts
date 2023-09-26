@@ -221,7 +221,11 @@ function expressiveValidator(
   return async (request: Request, response: Response, next: NextFunction) => {
     const { body, query, params, headers, originalUrl, method } = request;
 
-    let routeSchema: ValidationRule = schema[originalUrl] as ValidationRule;
+    const route = Object.entries(schema).find(
+      ([url]) => url.match(originalUrl) !== null
+    );
+
+    let routeSchema = route ? (route[1] as ValidationRule) : null;
 
     if (!routeSchema) {
       console.log("No Schema For Route :" + originalUrl);

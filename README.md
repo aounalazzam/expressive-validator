@@ -27,6 +27,7 @@ npm i expressive-validator
 - [x] No Symbols Validation
 - [x] Query XSS Detection
 - [x] Custom Error Logger
+- [x] URL Regex Matcher
 
 > .... More Features (In Planning)
 
@@ -63,6 +64,14 @@ Schema `schema.json`
       "method": "POST"
       ...
     }
+  ],
+    "/api/users/.+": [
+    {
+      "method": "DELETE",
+      "params": {
+        "id": { "type": "string", "require": true }
+      }
+    },
   ]
 }
 ```
