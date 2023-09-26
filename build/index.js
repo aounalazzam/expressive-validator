@@ -38,8 +38,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-function validate(schema, res, data) {
+var email_validator_1 = __importDefault(require("email-validator"));
+var EMPTY_STRING = "";
+function validate(schema, res, data, checkXSS) {
     return __awaiter(this, void 0, void 0, function () {
         var pushErrorMessage;
         return __generator(this, function (_a) {
@@ -68,12 +73,37 @@ function validate(schema, res, data) {
                                     pushErrorMessage(errorMessage, "isRequireErrorMessage");
                                     return resolve(false);
                                 }
+                                var stringValueSpecification = type.indexOf("(") && type.indexOf(")")
+                                    ? type.substring(type.indexOf("(") + 1, type.indexOf(")"))
+                                    : "";
+                                var typeWithoutSpecification = type.replace("(" + stringValueSpecification + ")", EMPTY_STRING);
                                 var typeofValue = typeof value;
                                 // Type Checking
-                                if (typeofValue !== type) {
+                                if (typeofValue !== typeWithoutSpecification) {
                                     pushErrorMessage(errorMessage, "notSameTypeErrorMessage");
                                     console.log("expressive-validator  :Typeof '".concat(key, "' not equal '").concat(type, "' received '").concat(typeofValue, "'"));
                                     return resolve(false);
+                                }
+                                if (typeofValue === "string" && stringValueSpecification !== "") {
+                                    // Email
+                                    if (stringValueSpecification === "email") {
+                                        if (!email_validator_1.default.validate(value)) {
+                                            return resolve(false);
+                                        }
+                                    }
+                                    // No Symbols
+                                    if (stringValueSpecification === "no-symbols") {
+                                        var symbols = value.replace(/^[0-9A-z ]+?$/g, "");
+                                        if (symbols.length > 0) {
+                                            return resolve(false);
+                                        }
+                                    }
+                                }
+                                if (checkXSS &&
+                                    typeofValue === "string" &&
+                                    (value.includes("<") || value.includes(">"))) {
+                                    value = value.replaceAll(/\<|\>/gm, "_");
+                                    console.log("expressive-validator  : Query XSS Detected ('".concat(type, "')"));
                                 }
                                 // Minlength Checking
                                 if (minLength) {
@@ -125,11 +155,11 @@ function validate(schema, res, data) {
 function expressiveValidator(schema) {
     var _this = this;
     return function (request, response, next) { return __awaiter(_this, void 0, void 0, function () {
-        var body, query, params, originalUrl, method, routeSchema, routeSchemaParams, _a, routeSchemaQueryParams, _b, routeSchemaBody, _c;
-        return __generator(this, function (_d) {
-            switch (_d.label) {
+        var body, query, params, headers, originalUrl, method, routeSchema, routeSchemaParams, _a, routeSchemaQueryParams, _b, routeSchemaBody, _c, routeSchemaHeaders, _d;
+        return __generator(this, function (_e) {
+            switch (_e.label) {
                 case 0:
-                    body = request.body, query = request.query, params = request.params, originalUrl = request.originalUrl, method = request.method;
+                    body = request.body, query = request.query, params = request.params, headers = request.headers, originalUrl = request.originalUrl, method = request.method;
                     routeSchema = schema[originalUrl];
                     if (!routeSchema) {
                         console.log("No Schema For Route :" + originalUrl);
@@ -155,8 +185,8 @@ function expressiveValidator(schema) {
                     if (!_a) return [3 /*break*/, 2];
                     return [4 /*yield*/, validate(routeSchemaParams, response, params)];
                 case 1:
-                    _a = !(_d.sent());
-                    _d.label = 2;
+                    _a = !(_e.sent());
+                    _e.label = 2;
                 case 2:
                     // Params Checking
                     if (_a) {
@@ -165,10 +195,10 @@ function expressiveValidator(schema) {
                     routeSchemaQueryParams = routeSchema.query;
                     _b = routeSchemaQueryParams;
                     if (!_b) return [3 /*break*/, 4];
-                    return [4 /*yield*/, validate(routeSchemaQueryParams, response, query)];
+                    return [4 /*yield*/, validate(routeSchemaQueryParams, response, query, true)];
                 case 3:
-                    _b = !(_d.sent());
-                    _d.label = 4;
+                    _b = !(_e.sent());
+                    _e.label = 4;
                 case 4:
                     // Query Checking
                     if (_b) {
@@ -179,11 +209,23 @@ function expressiveValidator(schema) {
                     if (!_c) return [3 /*break*/, 6];
                     return [4 /*yield*/, validate(routeSchemaBody, response, body)];
                 case 5:
-                    _c = !(_d.sent());
-                    _d.label = 6;
+                    _c = !(_e.sent());
+                    _e.label = 6;
                 case 6:
                     // Body Checking
                     if (_c) {
+                        return [2 /*return*/];
+                    }
+                    routeSchemaHeaders = routeSchema.headers;
+                    _d = routeSchemaHeaders;
+                    if (!_d) return [3 /*break*/, 8];
+                    return [4 /*yield*/, validate(routeSchemaHeaders, response, headers)];
+                case 7:
+                    _d = !(_e.sent());
+                    _e.label = 8;
+                case 8:
+                    // Headers Checking
+                    if (_d) {
                         return [2 /*return*/];
                     }
                     next();

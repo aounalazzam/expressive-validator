@@ -2,6 +2,7 @@
  * This Source Code Is Written By Aoun Alazzam And Under The MIT License
  */
 
+import emailValidator from "email-validator";
 import { NextFunction, Request, Response } from "express";
 
 type HTTPMethod = "GET" | "PATCH" | "POST" | "PUT" | "DELETE";
@@ -15,6 +16,7 @@ type ErrorMessages =
 type ValidationParams = {
   type:
     | "string"
+    | "string(email)"
     | "number"
     | "boolean"
     | "array"
@@ -33,6 +35,7 @@ type ValidationRule = {
   body: { [item: string]: ValidationParams };
   params: { [param: string]: ValidationParams };
   query: { [queryParam: string]: ValidationParams };
+  headers: { [headerName: string]: ValidationParams };
 };
 
 type Schema = {
@@ -41,10 +44,13 @@ type Schema = {
     | ValidationRule;
 };
 
+const EMPTY_STRING = "";
+
 async function validate(
   schema: { [item: string]: ValidationParams },
   res: Response,
-  data: any
+  data: any,
+  checkXSS?: true
 ) {
   const pushErrorMessage = (
     errorMessage: ValidationParams["errorMessage"],
@@ -63,7 +69,7 @@ async function validate(
 
   return await new Promise((resolve) => {
     for (const key in schema) {
-      const value = data[key];
+      let value = data[key];
       const { type, require, maxLength, minLength, errorMessage } = schema[key];
 
       // Not Require
@@ -80,10 +86,20 @@ async function validate(
         return resolve(false);
       }
 
+      const stringValueSpecification =
+        type.indexOf("(") && type.indexOf(")")
+          ? type.substring(type.indexOf("(") + 1, type.indexOf(")"))
+          : "";
+
+      const typeWithoutSpecification = type.replace(
+        "(" + stringValueSpecification + ")",
+        EMPTY_STRING
+      );
+
       const typeofValue = typeof value;
 
       // Type Checking
-      if (typeofValue !== type) {
+      if (typeofValue !== typeWithoutSpecification) {
         pushErrorMessage(errorMessage, "notSameTypeErrorMessage");
 
         console.log(
@@ -91,6 +107,34 @@ async function validate(
         );
 
         return resolve(false);
+      }
+
+      if (typeofValue === "string" && stringValueSpecification !== "") {
+        // Email
+        if (stringValueSpecification === "email") {
+          if (!emailValidator.validate(value)) {
+            return resolve(false);
+          }
+        }
+
+        // No Symbols
+        if (stringValueSpecification === "no-symbols") {
+          const symbols = value.replace(/^[0-9A-z ]+?$/g, "");
+
+          if (symbols.length > 0) {
+            return resolve(false);
+          }
+        }
+      }
+
+      if (
+        checkXSS &&
+        typeofValue === "string" &&
+        (value.includes("<") || value.includes(">"))
+      ) {
+        value = value.replaceAll(/\<|\>/gm, "_");
+
+        console.log(`expressive-validator  : Query XSS Detected ('${type}')`);
       }
 
       // Minlength Checking
@@ -161,7 +205,7 @@ async function validate(
 
 function expressiveValidator(schema: Schema) {
   return async (request: Request, response: Response, next: NextFunction) => {
-    const { body, query, params, originalUrl, method } = request;
+    const { body, query, params, headers, originalUrl, method } = request;
 
     let routeSchema: ValidationRule = schema[originalUrl] as ValidationRule;
 
@@ -201,7 +245,7 @@ function expressiveValidator(schema: Schema) {
     // Query Checking
     if (
       routeSchemaQueryParams &&
-      !(await validate(routeSchemaQueryParams, response, query))
+      !(await validate(routeSchemaQueryParams, response, query, true))
     ) {
       return;
     }
@@ -210,6 +254,16 @@ function expressiveValidator(schema: Schema) {
 
     // Body Checking
     if (routeSchemaBody && !(await validate(routeSchemaBody, response, body))) {
+      return;
+    }
+
+    const routeSchemaHeaders = routeSchema.headers;
+
+    // Headers Checking
+    if (
+      routeSchemaHeaders &&
+      !(await validate(routeSchemaHeaders, response, headers))
+    ) {
       return;
     }
 

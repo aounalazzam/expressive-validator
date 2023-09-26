@@ -2,9 +2,6 @@
 
 A Schema Based Validation Middleware For Body, Query, Params, Cookies & Headers In Express JS
 
-Note : ⚠️⚠️⚠️ This Library In Development Don`t Use For Production
-
-
 ## Usage
 
 ```bash
@@ -16,6 +13,7 @@ npm i expressive-validator
 - Schema-Based & Memory Efficient
 - More extensibility features
 - Better JSON schema compliance
+- More String Validation Types Like (Emails, Without Symbols)
 - Can Validate Body, Query, Params, Cookies & Headers In Same Time
 
 ## Dev Timeline
@@ -24,9 +22,10 @@ npm i expressive-validator
 - [x] Query
 - [x] Params
 - [ ] Cookies
-- [ ] Headers
-- [ ] Email Validation
-- [ ] Query XSS Detection
+- [x] Headers
+- [x] Email Validation
+- [x] No Symbols Validation
+- [x] Query XSS Detection
 
 > .... More Features (In Planning)
 
@@ -39,7 +38,8 @@ Schema `schema.json`
   // Any HTTP Method
   "/api/login": {
     "body": {
-      "username": { "type": "string", "require": true },
+      "username": { "type": "string(no-symbols)", "require": true },
+      "email": { "type": "string(email)", "require": true },
       "type": { "type": "string", "require": false },
       "password": { "type": "string", "require": true, "minLength": 8 }
     },

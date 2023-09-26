@@ -5,7 +5,7 @@ import { NextFunction, Request, Response } from "express";
 type HTTPMethod = "GET" | "PATCH" | "POST" | "PUT" | "DELETE";
 type ErrorMessages = "isRequireErrorMessage" | "notSameTypeErrorMessage" | "overMaxLengthErrorMessage" | "lessThanMinLengthErrorMessage";
 type ValidationParams = {
-    type: "string" | "number" | "boolean" | "array" | "object" | "null" | "undefined";
+    type: "string" | "string(email)" | "number" | "boolean" | "array" | "object" | "null" | "undefined";
     require?: boolean;
     minLength?: number;
     maxLength?: number;
@@ -22,6 +22,9 @@ type ValidationRule = {
     };
     query: {
         [queryParam: string]: ValidationParams;
+    };
+    headers: {
+        [headerName: string]: ValidationParams;
     };
 };
 type Schema = {
