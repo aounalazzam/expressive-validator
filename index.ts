@@ -18,6 +18,7 @@ type ValidationParams = {
     | "string"
     | "string(email)"
     | "string(no-symbols)"
+    | "string(not-empty)"
     | "number"
     | "boolean"
     | "array"
@@ -33,19 +34,24 @@ type ValidationParams = {
 };
 
 type ValidationRule = {
-  body: { [item: string]: ValidationParams };
-  params: { [param: string]: ValidationParams };
-  query: { [queryParam: string]: ValidationParams };
-  headers: { [headerName: string]: ValidationParams };
+  method: HTTPMethod;
+  body?: { [item: string]: ValidationParams };
+  params?: { [param: string]: ValidationParams };
+  query?: { [queryParam: string]: ValidationParams };
 };
 
 type Schema = {
-  [url: string]:
-    | Array<ValidationRule & { method: HTTPMethod }>
-    | ValidationRule;
+  [url: string]: Array<ValidationRule> | ValidationRule;
 };
 
 const EMPTY_STRING = "";
+
+const pathToRegex = (path: string) => {
+  return new RegExp(
+    "^" + path.replace(/\//g, "\\/").replace(/:\w+/g, "(.+)") + "$",
+    "gi"
+  );
+};
 
 async function validate(
   schema: { [item: string]: ValidationParams },
@@ -74,7 +80,7 @@ async function validate(
       const { type, require, maxLength, minLength, errorMessage } = schema[key];
 
       // Not Require
-      if (require === false && value === undefined) {
+      if (require === false && (value === undefined || value === "undefined")) {
         continue;
       }
 
@@ -100,11 +106,15 @@ async function validate(
       const typeofValue = typeof value;
 
       // Type Checking
-      if (typeofValue !== typeWithoutSpecification) {
+      if (
+        type === "array" &&
+        !Array.isArray(value) &&
+        typeofValue !== typeWithoutSpecification
+      ) {
         pushErrorMessage(errorMessage, "notSameTypeErrorMessage");
 
         console.log(
-          `expressive-validator  :Typeof '${key}' not equal '${type}' received '${typeofValue}'`
+          `expressive-validator : Typeof '${key}' not equal '${type}' received '${typeofValue}'`
         );
 
         return resolve(false);
@@ -114,6 +124,13 @@ async function validate(
         // Email
         if (stringValueSpecification === "email") {
           if (!emailValidator.validate(value)) {
+            return resolve(false);
+          }
+        }
+
+        // Empty
+        if (stringValueSpecification === "not-empty") {
+          if (value.length === 0) {
             return resolve(false);
           }
         }
@@ -135,7 +152,7 @@ async function validate(
       ) {
         value = value.replaceAll(/\<|\>/gm, "_");
 
-        console.log(`expressive-validator  : Query XSS Detected ('${type}')`);
+        console.log(`expressive-validator : Query XSS Detected ('${type}')`);
       }
 
       // Minlength Checking
@@ -148,7 +165,7 @@ async function validate(
             pushErrorMessage(errorMessage, "lessThanMinLengthErrorMessage");
 
             console.log(
-              `expressive-validator  : Length of '${key}' must be greater than ${minLength} received ${lengthOfValue}`
+              `expressive-validator : Length of '${key}' must be greater than ${minLength} received ${lengthOfValue}`
             );
 
             return;
@@ -178,7 +195,7 @@ async function validate(
             pushErrorMessage(errorMessage, "overMaxLengthErrorMessage");
 
             console.log(
-              `expressive-validator  : Length of '${key}' must be less than ${minLength} received ${lengthOfValue}`
+              `expressive-validator : Length of '${key}' must be less than ${minLength} received ${lengthOfValue}`
             );
 
             return;
@@ -219,20 +236,20 @@ function expressiveValidator(
   };
 
   return async (request: Request, response: Response, next: NextFunction) => {
-    const { body, query, params, headers, originalUrl, method } = request;
+    const { body, query, params, originalUrl, method } = request;
 
-    const route = Object.entries(schema).find(
-      ([url]) => url.match(originalUrl) !== null
+    const route = Object.entries(schema).find(([url]) =>
+      pathToRegex(url).test(originalUrl)
     );
 
     let routeSchema = route ? (route[1] as ValidationRule) : null;
 
-    if (!routeSchema) {
-      console.log("No Schema For Route :" + originalUrl);
+    if (!(routeSchema && method == routeSchema.method)) {
+      console.log("No Schema For Route " + " <" + method + "> " + originalUrl);
       return next();
     }
 
-    if (Array.isArray(routeSchema)) {
+    if (routeSchema && Array.isArray(routeSchema)) {
       routeSchema = routeSchema.find(({ method: currentHTTPMethod }) =>
         currentHTTPMethod.includes("|")
           ? currentHTTPMethod
@@ -272,16 +289,6 @@ function expressiveValidator(
 
     // Body Checking
     if (routeSchemaBody && !(await validate(routeSchemaBody, response, body))) {
-      return errLogger(request, response);
-    }
-
-    const routeSchemaHeaders = routeSchema.headers;
-
-    // Headers Checking
-    if (
-      routeSchemaHeaders &&
-      !(await validate(routeSchemaHeaders, response, headers))
-    ) {
       return errLogger(request, response);
     }
 
